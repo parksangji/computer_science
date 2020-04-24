@@ -1,0 +1,187 @@
+#include<stdio.h>
+#include<stdlib.h>
+#include<string.h>
+#define FALSE 0
+#define TRUE 1
+
+typedef struct Tree *threaded_ptr;
+typedef char DATA;
+typedef struct Tree tree;
+
+
+typedef struct Tree {
+   DATA data;
+   threaded_ptr left_child;
+   threaded_ptr right_child;
+   int right_thread;
+   int left_thread;
+}Tree;
+
+typedef struct QueueNode {
+   Tree* data;
+   struct QueueNode *next;
+}QueueNode;
+
+typedef struct {
+   QueueNode *front, *rear;
+}QueueType;
+
+
+
+void EnQueue(QueueType *Q, Tree* tree);
+int DeQueue(QueueType *Q);
+void init(QueueType *Q, Tree *T);
+threaded_ptr insucc(threaded_ptr tree);
+void inorder(threaded_ptr tree, FILE *out);
+//void insert_right(threaded_ptr parent, threaded_ptr child);
+void insert(Tree *root, DATA data, QueueType *Q);
+int isEmpty(QueueType *Q);
+
+
+int main() {
+   FILE *in = fopen("input.txt", "rt");
+   FILE *out = fopen("output.txt", "wt");
+   QueueType Q;
+   Tree T;
+   init(&Q, &T);
+   DATA a;
+
+   while (!feof(in)) {
+      fscanf(in, "%c ", &a);
+      insert(&T, a, &Q);
+
+   }
+   T.left_child->left_child->left_child->left_child->right_child = T.left_child->left_child->left_child;
+   T.left_child->left_child->left_child->right_child->right_child = T.left_child->left_child;
+   T.left_child->left_child->right_child->right_child = T.left_child;
+   T.left_child->right_child->left_child->right_child = T.left_child->right_child;
+   T.left_child->right_child->right_child->right_child = T.right_child;
+   inorder(&T, out);
+
+
+}
+
+void init(QueueType *Q, Tree *T) {
+   T->right_child = T->left_child = NULL;
+   T->left_thread = T->right_thread = 0;
+   T->data = 0;
+   Q->front = Q->rear = NULL;
+}
+int isEmpty(QueueType *Q) {
+   return (Q->front == NULL);
+}
+
+void EnQueue(QueueType *Q, Tree* data) {
+   QueueNode *newQueue = (QueueNode *)malloc(sizeof(QueueNode));
+
+   if (newQueue == NULL)
+      printf("메모리를 할당오류");
+   else {
+      newQueue->data = data;
+      newQueue->next = NULL;
+      if (isEmpty(Q)) {
+         Q->front = newQueue;
+         Q->rear = newQueue;
+      }
+      else {
+         Q->rear->next = newQueue;
+         Q->rear = newQueue;
+
+      }
+   }
+}
+
+int DeQueue(QueueType *Q) {
+   QueueNode *newQueue = Q->front;
+
+   if (isEmpty(Q))
+   {
+      printf("Empty");
+   }
+   else
+   {
+      Q->front = Q->front->next;
+      if (Q->front == NULL)
+         Q->rear = NULL;
+      free(newQueue);
+   }
+
+}
+
+/*쓰레드트리의중위탐색에대한다음노드값찾기*/
+threaded_ptr insucc(threaded_ptr tree) {
+
+   threaded_ptr temp;
+   temp = tree->right_child;
+   if (!tree->right_thread) {
+      while (!temp->left_thread) {
+
+         temp = temp->left_child;
+      }
+   }
+   return temp;
+}
+/*쓰레드트리의중위탐색알고리즘*/
+void inorder(threaded_ptr tree, FILE *out) {
+   threaded_ptr temp = tree;
+   for (;;) {
+      temp = insucc(temp);
+      if (temp == tree) break;
+      fprintf(out, "%c ", temp->data);
+   }
+
+}
+
+void insert(Tree *root, DATA data, QueueType *Q) {
+   Tree *newtree = (Tree*)malloc(sizeof(Tree));
+   if (newtree == NULL) {
+   }
+   else {
+      newtree->data = data;
+      newtree->left_thread = 1;
+      newtree->right_thread = 1;
+      newtree->right_child = NULL;
+      newtree->left_child = NULL;
+   }
+
+   if (root->left_child == NULL)
+   {
+      EnQueue(Q, newtree);
+      root->left_child = newtree;
+      root->right_child = root;
+   }
+   else
+   {
+      EnQueue(Q, newtree);
+      if (Q->front->data->left_child == NULL) {
+         Q->front->data->left_child = newtree;
+         Q->front->data->left_thread = 0;
+      }
+      else {
+         Q->front->data->right_child = newtree;
+         Q->front->data->right_thread = 0;
+         DeQueue(Q);
+      }
+   }
+
+
+}
+
+/* 쓰레드트리에서임의의노드의오른쪽에새로운노드를 삽입하는프로그램*/
+//void insert_right(threaded_ptr parent,threaded_ptr child){
+//   threaded_ptr temp;
+//   child->right_child = parent->right_child;
+//   child->right_thread= parent->right_thread;
+//   child->left_child = parent;
+//   child->left_thread = TRUE;
+//   parent->right_child = child;
+//   parent->right_thread = FALSE;
+//   /*오른쪽자식이있는경우*/
+//   if(!child->right_thread){
+//      temp = insucc(child);
+//      temp->left_child = child;
+//      }
+//}
+
+
+

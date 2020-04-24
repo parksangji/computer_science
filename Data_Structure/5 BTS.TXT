@@ -1,0 +1,189 @@
+#include <stdio.h> 
+#include<stdlib.h> 
+#include<string.h>
+
+typedef int DATA;
+struct TreeNode {
+	DATA data;
+	struct TreeNode* left;
+	struct TreeNode* right;
+};
+
+struct TreeNode* newNode(DATA data);
+struct TreeNode* insert(struct TreeNode* TreeNode, DATA data,FILE *out);
+struct TreeNode* Delete(struct TreeNode *TreeNode, DATA data,FILE *out);
+struct TreeNode* findmax(struct TreeNode* TreeNode);
+struct TreeNode* find(struct TreeNode* TreeNode, DATA data);
+void inorder(struct TreeNode* TreeNode,FILE *out);
+void preorder(struct TreeNode* TreeNode,FILE *out);
+void postorder(struct TreeNode* TreeNode,FILE *out);
+
+int main() {
+	FILE *in = fopen("input.txt", "rt");
+	FILE *out = fopen("output.txt", "wt");
+	DATA a;
+	char command[10];
+	struct TreeNode* root = NULL, *Find;
+
+	while (!feof(in)) {
+		fscanf(in, "%s ", command);
+		if (strcmp(command, "i") == 0) {
+			fscanf(in, "%d", &a);
+			root = insert(root, a,out);
+		}
+		else if (strcmp(command, "pi") == 0) {
+			fprintf(out,"\npi - ");
+			inorder(root,out);
+		}
+		else if (strcmp(command, "pr") == 0) {
+			fprintf(out,"\npr - ");
+			preorder(root,out);
+		}
+		else if (strcmp(command, "po") == 0) {
+			fprintf(out,"\npo - ");
+			postorder(root,out);
+		}
+		else if (strcmp(command, "d") == 0) {
+			fscanf(in, "%d", &a);
+			root = Delete(root, a,out);
+		}
+		else if (strcmp(command, "f") == 0) {
+			fscanf(in, "%d", &a);
+			Find = find(root, a);
+			/*find 함수를 써서 null값이 아닌경우와 null값인 경우*/
+			if (Find != NULL)
+				fprintf(out,"\n%d is in the tree.", a);
+			else
+				fprintf(out,"\n%d is not in the tree.", a);
+		}
+
+	}
+
+	return 0;
+}
+/*새로운 노드를 생성-메모리 할당*/
+struct TreeNode* newNode(DATA data) {
+	struct TreeNode* TreeNode = (struct TreeNode*)malloc(sizeof(struct TreeNode));
+	TreeNode->data = data;
+	TreeNode->left = TreeNode->right = NULL;
+	return TreeNode;
+}
+/*트리안에 없으면 새로운 트리노드로 return 한다. 값이 있을경우 data 값이 트리 data보다 작을
+경우 왼쪽 트리에 삽입한다. 반대로 값이 큰경우에는 오른쪽 트리에 삽입한다.만약 삽입하는 값이
+이미 트리에 있을경우 메세지를 보낸다.*/
+struct TreeNode* insert(struct TreeNode* TreeNode, DATA data,FILE *out) {
+	if (TreeNode == NULL)
+		return(newNode(data));
+	else {
+		if (data < TreeNode->data)
+			TreeNode->left = insert(TreeNode->left, data,out);
+		else if (data > TreeNode->data)
+			TreeNode->right = insert(TreeNode->right, data,out);
+		else
+			fprintf(out,"%d already exists.", data);
+
+		return TreeNode;
+	}
+}
+/*여분의 새로운 노드를 생성하고, 삭제할 노드가 NULL값이면 메세지를 보낸다.
+삭제할 노드가 leaf 라면 바로 삭제를 하고,삭제할 노드에 자식노드 하나가 있을경우
+노드의 자식노드는 노드의 부모 노드에 연결한다. 삭제할 노드가 둘 다 하위 노드를 갖고 있을 
+경우 오른쪽 하위 트리에서 가장 작은 노드로 대체 된다.*/
+struct TreeNode* Delete(struct TreeNode *TreeNode, DATA data,FILE *out) {
+	struct TreeNode *temp;
+	if (TreeNode == NULL)
+		fprintf(out,"\nDeletion failed. %d does not exist.", data);
+
+	else if (data < TreeNode->data)
+		TreeNode->left = Delete(TreeNode->left, data,out);
+
+	else if (data > TreeNode->data)
+		TreeNode->right = Delete(TreeNode->right, data,out);
+
+	else if (TreeNode->left && TreeNode->right) {
+
+		temp = findmax(TreeNode->left);
+		TreeNode->data = temp->data;
+		TreeNode->left = Delete(TreeNode->left, TreeNode->data,out);
+
+	}
+	else {
+		temp = TreeNode;
+		if (TreeNode->left == NULL)
+			TreeNode = TreeNode->right;
+		else if (TreeNode->right == NULL)
+			TreeNode = TreeNode->left;
+		free(temp);
+	}
+	return TreeNode;
+}
+/*find max함수는 찾고자 하는 트리를 오른쪽 트리부터 찾는 함수이다.*/
+struct TreeNode* findmax(struct TreeNode* TreeNode) {
+	if (TreeNode == NULL)
+		return NULL;
+	else if (TreeNode->right != NULL)
+		return findmax(TreeNode->right);
+	else if (TreeNode->right == NULL)
+		return TreeNode;
+}
+/*찾고자 하는 값을 찾을때 NULL값일 경우 return NULL 원하는값을 찾을때 찾고자
+하는 값이 루트키보다 작을겨우 왼쪽 서브트리로 이동 큰경우 오른쪽서브로 이동*/
+struct TreeNode* find(struct TreeNode* TreeNode, DATA data) {
+
+	if (TreeNode == NULL)
+		return NULL;
+	if (data < TreeNode->data)
+		return find(TreeNode->left, data);
+	else if (data > TreeNode->data)
+		return find(TreeNode->right, data);
+	else
+		return TreeNode;
+}
+/*중위 순회-왼쪽 하위 트리를 출력후에 부모 노드를 출력 마지막으로 오른쪽 하위 트
+리를 출력한다.*/
+void inorder(struct TreeNode* TreeNode,FILE *out) {
+	if (TreeNode == NULL)return;
+
+	inorder(TreeNode->left,out);
+	fprintf(out,"%d ", TreeNode->data);
+	inorder(TreeNode->right,out);
+
+
+}
+/*전위 순회-부모노트를 출력후에 왼쪽 하위 트리를 출력하고 마지막으로 오른쪽 하위 트리를
+출력한다.*/
+void preorder(struct TreeNode* TreeNode,FILE *out) {
+	if (TreeNode == NULL)return;
+
+	fprintf(out,"%d ", TreeNode->data);
+	preorder(TreeNode->left,out);
+	preorder(TreeNode->right,out);
+
+}
+/*후위 순회- 왼쪽 하위 트리를 출력하고 오른쪽 하위 트리를 출력한다. 마지막으로 
+부모 노드를 출력한다.*/
+void postorder(struct TreeNode* TreeNode,FILE *out) {
+	if (TreeNode == NULL) return;
+	postorder(TreeNode->left,out);
+	postorder(TreeNode->right,out);
+	fprintf(out,"%d ", TreeNode->data);
+}
+
+
+
+//DATA minValue(struct TreeNode* TreeNode) { 
+//  struct TreeNode* current = TreeNode; 
+//  
+//  while (current->left != NULL) { 
+//    current = current->left; 
+//  } 
+//  return(current->data); 
+//}  
+
+//DATA maxValue(struct TreeNode* TreeNode) {    
+//    struct TreeNode* current = TreeNode; 
+//    while (current->right != NULL)  
+//        current = current->right; 
+//      
+//    return (current->data); 
+//} 

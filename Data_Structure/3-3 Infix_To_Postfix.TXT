@@ -1,0 +1,211 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <ctype.h>
+#include <math.h>
+
+typedef int element; 
+typedef struct Node Node;
+
+struct Node {
+    element data;
+    Node *next; 
+};
+ 
+Node *top = NULL;
+
+void init();/*Stack initialization*/
+int IsEmpty();/*Check stack empty space*/ 
+void pushStack(element item);/*Stack Push*/ 
+element popStack(); /*Stack Pop*/
+element peek();
+int is_oper(int c);/*Check Operation symbols*/
+int prec(int c);/*Prioritize operation symbols when saving on stacks*/
+element EvalPostfix(char *exp);/*Postfix notation operation*/ 
+char *InfixToPostfix(char *exp,char *out);/*Converting the middle notation to postfix notation*/
+
+int main(){
+int line_num;  
+    int i = 0;
+    int j = 0;
+    char buffer[100];   
+    char postfix[100]; 
+    char *express;
+
+    FILE *in = fopen("input.txt", "rt");
+    FILE *out = fopen("output.txt","wt");
+    if (in != NULL) { 
+ 
+        int k, result;
+        fgets(buffer, 256, in);
+        line_num = atoi(buffer); 
+         
+        fgets(buffer,100,in); 
+        char *express = buffer;  
+        express = InfixToPostfix(buffer,postfix);
+		buffer[strlen(buffer) - 1] = '\0'; 
+        fprintf(out,"infix Form : %s\n",buffer); 
+        fprintf(out,"Postfix Form : %s\n",postfix);        
+        result = EvalPostfix(postfix);
+        fprintf(out,"Evaluation Result : %d \n", result);
+
+        return 0;
+		}
+	}
+
+void init(){
+  
+    Node *tmp;
+ 
+    while (top) {
+        tmp = top;
+        top = top->next;  
+        free(tmp);
+    }
+    top = NULL;
+}
+
+int IsEmpty(){
+    return top == NULL;
+}
+
+void pushStack(element item){
+    Node *temp = (Node *)malloc(sizeof(Node));
+  
+    temp->data = item;
+    temp->next = top;
+    top = temp; 
+}
+ 
+element popStack(){
+    element item; 
+ 
+    if (top == NULL) {
+        printf("\nEmpty\n");
+        
+    } else {
+        Node *temp = top;
+        item = temp->data;
+        top = temp->next;
+        free(temp);
+    }
+    return item;
+}
+  
+element peek(){
+//    element item;
+ 
+    if (top == NULL) {
+        printf("\nEmpty!\n");
+        return 0;
+    } else {
+        return top->data;
+    }
+//    return item;
+}
+
+int is_oper(int c){
+    switch (c) {
+    case '+': case '-': 
+    case '*': case '/': case '^': case '%': return 1;
+    }
+    return 0;
+}
+
+int prec(int c){
+    switch (c) {
+    case '(': return 10;
+    case '+': case '-': return 20;
+    case '*': case '/': case '%': return 30;
+    case '^' : return 40;
+    }
+    return 0;
+}
+
+element EvalPostfix(char *exp){
+    int O1, O2, value, i = 0;  
+    int length = strlen(exp);  
+ 
+    char symbol;
+ 
+    init();  
+ 
+    for (i = 0; i < length; i++) {
+        symbol = exp[i]; 
+        /* Numerical distinction inspection */
+        if (isdigit(symbol)) { 
+            pushStack(symbol - '0');
+        }
+		/* Only if not ' ' in numerical distinction check */ 
+		else { 
+            if(is_oper(symbol)) { 
+                O2 = popStack();   
+                O1 = popStack();
+                switch (symbol) {
+                case '+':
+                    pushStack(O1 + O2);
+                    break;
+                case '-':
+                    pushStack(O1 - O2);
+                    break;
+                case '*':
+                    pushStack(O1 * O2);
+                    break;
+                case '/':
+                    if (O2 == 0) {
+                        printf("\nCan not divide by zero\n");
+                        exit(-2);
+                    }
+                    pushStack((int)(O1 / O2));
+                    break;
+                case '%':
+                    pushStack(O1 % O2);
+                    break;
+
+                }
+            }
+        }
+    }
+    return popStack();
+}
+
+char *InfixToPostfix(char *exp,char *out){
+    char symbol, *print;
+    int i, count = 0, length = (int)strlen(exp); 
+    int O;
+ 
+    init(); 
+    /* StackPush processing based on operation value */
+    for (i = 0; i < length; i++) {
+        symbol = exp[i];   
+        if (symbol == '(') {
+            pushStack('(');   
+        } 
+		else if (symbol == ')') {   
+            while ( (O = popStack()) != '(') {
+                out[count++] = O; 
+
+            }
+        }
+        /*If the operation value is '#', push pops it out at the same time*/
+        else if(symbol == '#'){
+        	break;
+		}
+		else if (is_oper(symbol)) { 
+            while (!IsEmpty() && prec(symbol) <= prec(peek())) {   
+                out[count++] = popStack(); 
+            }
+            pushStack(symbol); 
+        }
+		else {
+            out[count++] = symbol;  
+        }
+    }
+    while (!IsEmpty()) {
+        out[count++] = popStack();
+    }
+    out[count] = 0;
+ 
+    return out;
+}
+ 

@@ -1,0 +1,136 @@
+#include<stdio.h>
+#include<stdlib.h>
+#include<string.h>
+
+typedef int DATA;
+struct AVLNode {
+	DATA data;
+	struct AVLNode *left, *right;
+	int height;
+};
+
+DATA Height(struct AVLNode* T);
+DATA Max(int a, int b);
+struct AVLNode* insert(DATA data, struct AVLNode* T, FILE *out);
+struct AVLNode* SingleRotateWithLeft(struct AVLNode* K2);
+struct AVLNode* SingleRotateWithRight(struct AVLNode* K2);
+struct AVLNode* DoubleRotateWithLeft(struct AVLNode* K3);
+struct AVLNode* DoubleRotateWithRight(struct AVLNode* K3);
+void inorder(struct AVLNode* T, FILE *out);
+
+int main() {
+
+	struct AVLNode *root = NULL;
+	FILE *in = fopen("input.txt", "rt");
+	FILE *out = fopen("output.txt", "wt");
+	DATA a;
+
+	while (!feof(in)) {
+		fscanf(in, "%d ", &a);
+		root = insert(a, root, out);
+		inorder(root, out);
+		fprintf(out, "\n");
+	}
+}
+
+/*노드 값이 없으면 return -1 아니면 현재의 높이로 return*/
+int Height(struct AVLNode* T) {
+	if (T == NULL)
+		return -1;
+	else
+		return T->height;
+}
+/*숫자 a,b값 비교연산(Max)*/
+int Max(int a, int b) {
+
+	return (((a) > (b)) ? (a) : (b));
+}
+/*노드 K2의 왼쪽 자식의 왼쪽 하위 트리에 삽입 */
+struct AVLNode* SingleRotateWithLeft(struct AVLNode* K2) {
+	struct AVLNode *K1;
+
+	K1 = K2->left;
+	K2->left = K1->right;
+	K1->right = K2;
+
+	K2->height = Max(Height(K2->left), Height(K2->right)) + 1;
+	K1->height = Max(Height(K1->left), Height(K1->right)) + 1;
+
+	return K1;
+}
+/*노드 K2의 오른쪽 자식의 오른쪽 하위 트리에 삽입*/
+struct AVLNode* SingleRotateWithRight(struct AVLNode* K2) {
+
+	struct AVLNode *K1;
+
+	K1 = K2->right;
+	K2->right = K1->left;
+	K1->left = K2;
+
+	K2->height = Max(Height(K2->right), Height(K2->left)) + 1;
+	K1->height = Max(Height(K1->right), Height(K1->left)) + 1;
+
+	return K1;
+}
+/*노드 K3의 왼쪽 자식의 오른쪽 하위 트리에 삽입*/
+struct AVLNode* DoubleRotateWithLeft(struct AVLNode* K3) {
+	K3->left = SingleRotateWithRight(K3->left);
+	return SingleRotateWithLeft(K3);
+}
+/*노드 K3의 오른쪽 자식 노드의 왼쪽 하위 트리에 삽입*/
+struct AVLNode* DoubleRotateWithRight(struct AVLNode* K3) {
+	K3->right = SingleRotateWithLeft(K3->right);
+	return SingleRotateWithRight(K3);
+}
+/*중위 순회-왼쪽 하위 트리를 출력후에 부모 노드를 출력 마지막으로 오른쪽 하위 트리를 출력한다.*/
+void inorder(struct AVLNode* T, FILE *out) {
+	if (T == NULL)return;
+
+	else {
+		inorder(T->left, out);
+		fprintf(out, "%d(%d) ", T->data, Height(T));
+		inorder(T->right, out);
+	}
+}
+/*트리 안에 값이 없으면 새로운 T라는 트리에 메모리를 할당하고 초기화를 시켜준다. 값이 있을경우
+트리 안의 숫자가 지금의 트리 보다 작은경우 왼쪽 자식 노드로 삽입되고, 만약 삽입한 노드의 왼쪽,오른쪽 
+자식 노드의 높이차이가 2가 되면 2가지의 경우의 수로 나뉘어진다 왼쪽 자식 노드의 값이 작으면 LL 크면 LR
+,RR RL도 똑같은 방식으로 처리 ,만약 값이 같을경우 같다는 메세지를 부여.*/
+struct AVLNode* insert(DATA data, struct AVLNode* T, FILE *out) {
+	if (T == NULL) {
+		 T = (struct AVLNode*)malloc(sizeof(struct AVLNode));
+		if (T == NULL)
+			fprintf(out,"out of space!!");
+		else {
+			T->data = data;
+			T->height = 0;
+			T->left = T->right = NULL;
+		}
+	}
+	else{
+	if (data < T->data) {
+		T->left = insert(data, T->left, out);
+		if (Height(T->left) - Height(T->right) == 2) 
+			if (data < T->left->data)
+				T = SingleRotateWithLeft(T);
+			else
+				T = DoubleRotateWithLeft(T);
+		
+	}
+	else if (data > T->data) {
+		T->right = insert(data, T->right, out);
+		if (Height(T->right) - Height(T->left) == 2) 
+			if (data > T->right->data)
+				T = SingleRotateWithRight(T);
+			else
+				T = DoubleRotateWithRight(T);
+		
+	}
+	else 
+		fprintf(out, "%d already in the tree!\n", T->data);
+	    
+	}
+	T->height = Max(Height(T->left), Height(T->right)) + 1;
+	return T;
+}
+

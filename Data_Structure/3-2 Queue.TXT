@@ -1,0 +1,101 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+typedef int element;
+
+typedef struct QueueNode{
+ element data;
+ struct QueueNode *next;
+}QueueNode;
+
+typedef struct {
+ QueueNode *front, *rear;
+}QueueType;
+
+void init(QueueType *Q);  /*Queue initialization*/
+int isEmpty(QueueType *Q);  /*Check queue space*/
+void EnQueue(QueueType *Q, element data);  /*queue EnQueue*/
+element DeQueue(QueueType *Q);  /*queue DeQueue*/
+
+
+int main(){
+ QueueType Q;
+ init(&Q);
+ int i;
+ FILE *in=fopen("input.txt","rt");
+ FILE *out=fopen("output.txt","wt");
+ char command[30];   /*Specify the function to be commanded*/
+ 
+ while(!feof(in)){
+  fscanf(in,"%s",command);
+  
+  if (strcmp(command, "enQ") == 0) {
+  fscanf(in,"%d ",&i);
+  EnQueue(&Q, i); /*queue EnQueue*/
+  }
+  
+  else if (strcmp(command,"deQ") == 0){
+          fprintf(out,"%d\n",DeQueue(&Q)); /*queue DeQueue*/
+          
+    if(isEmpty(&Q))   /*If the queue is empty*/
+	{
+      fprintf(out,"Empty\n");
+      return 0;
+    }    
+   }
+  }
+   }
+/*Initialize the front and rear values ??of the queue to NULL.*/
+void init(QueueType *Q){
+ Q->front = Q->rear = NULL;
+}
+/*Returns if the front value of the queue is NULL.*/
+int isEmpty(QueueType *Q){
+ return (Q->front==NULL);
+}
+/*After creating a new node, set the data on the node
+If the node value is NULL, a warning message is sent. If it is not NULL
+After setting the node's data, if the node is empty,
+Set the rear value to the new node, and if it is not empty,
+Set it as a node and rear as a new node.*/
+void EnQueue(QueueType *Q, element data){
+ QueueNode *newQueue=(QueueNode *)malloc(sizeof(QueueNode));
+ 
+ if(newQueue == NULL)
+  printf("메모리를 할당오류"); 
+ else {
+  newQueue->data = data;
+  newQueue->next = NULL;
+  if( isEmpty(Q) ){
+   Q->front = newQueue;
+   Q->rear = newQueue;
+  }
+  else {
+   Q->rear->next = newQueue;
+   Q->rear = newQueue;
+  
+  }
+ }
+}
+/*If the queue is empty, return it as a data value, set the value of the data to the new data
+Set the front of the queue to the front of the queue next.
+If the front value of Q is NULL, the rear value is also set to NULL.
+Then delete the new node with the free function.*/
+element DeQueue(QueueType *Q){
+ QueueNode *newQueue = Q->front;
+ element data;
+ if(isEmpty(Q))
+ {
+  printf("Empty");
+  return data;
+ }
+ 
+  data = newQueue->data;
+  Q->front = Q->front->next;
+  if( Q->front == NULL )
+   Q->rear =NULL;
+  free(newQueue);
+  return data;
+ 
+}

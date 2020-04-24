@@ -1,0 +1,77 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+typedef struct Node 
+{
+    int data;
+    struct Node *next;
+}Node;
+typedef struct Stack {
+    Node *top;    
+}Stack;
+ 
+void InitStack(Stack *stack);  /*Stack initialization*/
+int IsEmpty(Stack *stack);   /*Check stack empty space*/ 
+void PushStack(Stack *stack, int data);  /*Stack Push*/ 
+int PopStack(Stack *stack);   /*Stack Pop*/
+
+int main(void){
+    int i;
+    FILE *in = fopen("input.txt","rt");
+    FILE *out = fopen("output.txt","wt");
+    
+    Stack stack;
+    char command[30];
+    InitStack(&stack); /*Stack initialization*/
+    while(!feof(in)){
+    fscanf(in,"%s",command);
+  
+    if (strcmp(command,"push") == 0) {
+    fscanf(in,"%d ",&i);
+    PushStack(&stack, i);/*½ºÅÃPush*/
+      }
+      else if (strcmp(command,"pop") == 0){
+       fprintf(out,"%d\n",PopStack(&stack));/*Stack Pop*/
+       
+         if(IsEmpty(&stack)){  /*Check stack empty space*/
+		 fprintf(out,"Empty\n");
+		 return 0;
+		 }
+		 }
+  
+  }
+}
+/*Initialize the value of the top part to NULL*/ 
+void InitStack(Stack *stack){
+    stack->top = NULL; 
+}
+/*empty if top is NULL*/ 
+int IsEmpty(Stack *stack){
+    return stack->top == NULL;       
+}
+/*After creating a new node, allocating memory, creating node data
+Set node next to top of stack and then top of stack to node.*/ 
+void PushStack(Stack *stack, int data){
+    Node *node = (Node *)malloc(sizeof(Node)); 
+    node->data = data;
+    node->next = stack->top; 
+    stack->top = node; 
+}
+/*Create a new node, give a return value if the stack is empty,
+If not, set the node to the top of the stack and set the value to be retrieved to i
+After setting, set top of stack to node next and delete node by writing free function.*/ 
+int PopStack(Stack *stack){
+    Node *node;
+    int i;
+    if (IsEmpty(stack))
+    {
+        return 0;
+    }
+    node = stack->top;
+    i = node->data;
+ 
+    stack->top = node->next;
+    free(node);
+    return i;
+}

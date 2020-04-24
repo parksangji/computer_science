@@ -1,0 +1,43 @@
+#include <stdio.h>                 
+#include <stdlib.h>
+
+struct member{
+	
+	char *name;
+	int age;
+	char *subject;
+	
+ };
+
+int main(){
+	FILE *in = fopen("input.txt","rt");
+	FILE *out = fopen("output.txt","wt");
+	
+	int n;
+	int i=0;
+	
+	member *m;
+	fscanf(in,"%d",&n);
+	
+    m = (member*)malloc(n*sizeof(member));
+	
+	while(!feof(in))
+		 {
+		 	m[i].name = (char*)malloc(30*sizeof(member));
+		 	m[i].subject = (char*)malloc(30*sizeof(member));
+		 	
+	fscanf(in,"%s %d %s",m[i].name,&m[i].age,m[i].subject);
+	i++;
+}
+	fclose(in);
+	for(i=0;i<n;i++){
+		fprintf(out,"%s %d %s\n",m[i].name,m[i].age,m[i].subject);
+	}
+	
+	fclose(out);
+	free(m);
+
+	return 0;	
+
+
+}

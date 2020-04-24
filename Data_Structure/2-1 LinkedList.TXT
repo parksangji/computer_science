@@ -1,0 +1,195 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+
+typedef struct {
+   char *Id;
+   char *Name;
+}Student;
+
+typedef struct _node
+{
+   Student *student;
+   struct _node *next;
+}Node;
+
+typedef struct LinkedList
+{
+   Node *head;
+   Node *tail;
+}LinkedList;
+
+
+Node *FindPrevious(LinkedList *L, Student *X,FILE *o);
+void del(LinkedList *L, Student *X,FILE *o);
+void find(LinkedList *L, Student *X,FILE *o)
+{
+   Node *temp = L->head;
+   while (temp != NULL)
+   {
+      if (temp != NULL && strcmp(temp->student->Id, X->Id) != 0)
+      {
+         fprintf(o, "Find %s Failed. There is no student ID\n", X->Id);
+         break;
+      }
+      else
+      {
+         fprintf(o,"Find Success : %s\n", temp->student->Id);
+         break;
+      }
+      temp = temp->next;
+   }
+}
+void make(LinkedList *L)
+{
+   L->head = NULL;
+   L->tail = NULL;
+}
+void insert(LinkedList *L, Student *X,FILE *o) {
+
+   Node *newNode = (Node *)malloc(sizeof(Node));
+   newNode->student = X;
+   newNode->next = NULL;
+
+   if (L->head == NULL) {
+      L->head = newNode;
+      L->tail = newNode;
+   }
+   else
+   {
+      Node *temp = L->head;
+      while(temp != NULL)
+      {
+         if (strcmp(temp->student->Id , newNode->student->Id) > 0 )
+         {
+           if (temp == L->head)
+           {
+             newNode->next = L->head;
+             L->head = newNode;
+             Node *tmp = L->head;
+             while (tmp != NULL)
+             {
+                fprintf(o,"Insertion Success : %s \n", tmp->student->Id);
+                fprintf(o,"Current List > %s %s \n", tmp->student->Id, tmp->student->Name);
+                tmp = tmp->next;
+             }
+             fprintf(o,"\n");
+             return;
+           }
+           else
+           {
+             Node *F_Pre = (Node*)malloc(sizeof(Node));
+             F_Pre = FindPrevious(L, temp->student,o);
+             newNode->next = F_Pre->next;
+             F_Pre->next = newNode;
+             Node *tmp = L->head;
+             while (tmp != NULL)
+             {
+                fprintf(o,"Insertion Success : %s \n", tmp->student->Id);
+                fprintf(o,"Current List > %s %s \n", tmp->student->Id, tmp->student->Name);
+             }
+             fprintf(o,"\n");
+             return;
+           }
+         }
+         else if (strcmp(newNode->student->Id, temp->student->Id) == 0)
+         {
+            fprintf(o,"Insertion Failed. ID %s already exists.\n", X->Id);
+            free(newNode);
+            return;
+         }
+         temp = temp->next;
+      }
+      L->tail->next = newNode;
+      L->tail = newNode;
+   }
+   Node *tmp = L->head;
+   while (tmp != NULL)
+   {
+      fprintf(o,"Insertion Success : %s \n", tmp->student->Id);
+      fprintf(o,"Current List > %s %s \n", tmp->student->Id, tmp->student->Name);
+      tmp = tmp->next;
+   }
+   fprintf(o,"\n");
+}
+Node *FindPrevious(LinkedList *L, Student *X,FILE *o) {
+
+   Node *P = L->head;
+   while (P->next != NULL && strcmp(P->next->student->Id, X->Id)!=0) {
+
+      P = P->next;
+   }
+   return P;
+}
+void print(LinkedList *L,Student *X,FILE *o){
+	Node *P = FindPrevious(L, X,o);
+	Node *print = L->head;
+	fprintf(o,"-----LIST-----\n");
+	while (print != NULL){
+		fprintf(o,"%s %s \n",print->student->Id,print->student->Name);
+		print = print->next;
+	}
+	fprintf(o,"--------------");
+	
+	
+}
+void del(LinkedList *L, Student *X,FILE *o)
+{
+   Node *P = FindPrevious(L, X,o);
+   if (P->next == NULL)
+      fprintf(o,"delete fail\n");
+   else
+   {
+      Node *delNode = (Node*)malloc(sizeof(Node));
+      delNode = P->next;
+      P->next = delNode->next;
+      free(delNode);
+      fprintf(o,"deletion success\n");
+      Node *tmp = L->head;
+      while (tmp != NULL)
+      {
+         fprintf(o,"Insertion Success : %s \n", tmp->student->Id);
+         fprintf(o,"Current List > %s %s ", tmp->student->Id, tmp->student->Name);
+         tmp = tmp->next;
+      }
+      fprintf(o,"\n");
+   }
+}
+
+int main(void)
+{
+   LinkedList list;
+   make(&list);
+      FILE *f =fopen("input.txt", "rt");
+   FILE *o =fopen("output.txt","wt");
+
+   Student *student;
+   char command[30];
+
+   while (!feof(f)) {
+      student = (Student*)malloc(sizeof(Student));
+      student->Id = (char*)malloc(sizeof(char) * 30);
+      student->Name = (char*)malloc(sizeof(char) * 30);
+      fscanf(f, "%s ", command);
+      if (strcmp(command, "i") == 0) {
+         fscanf(f, "%s %[^\n] ", student->Id, student->Name);
+         insert(&list, student,o);
+      }
+      else if (strcmp(command, "d") == 0)
+      {
+         fscanf(f, "%[^\n] ", student->Id);
+         del(&list, student,o);
+      }
+      else if (strcmp(command, "f") == 0)
+      {
+         fscanf(f, "%[^\n] ", student->Id);
+         find(&list, student,o);
+      }
+   }
+   
+   print(&list,student,o);
+   fclose(f);
+   fclose(o);
+   return 0;
+}

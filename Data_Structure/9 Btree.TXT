@@ -1,0 +1,149 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+#define order 3
+
+typedef struct B_node{
+        int n_child; 
+        int key[order - 1]; 
+        struct B_node *child[order]; 
+} B_node;
+B_node *root = NULL;
+
+typedef enum KeyStatus {
+        Duplicate,
+        SearchFailure,
+        Success,
+        InsertIt,
+        LessKeys,
+} KeyStatus;
+
+void insert(int key);
+KeyStatus ins(B_node *node, int x, int* y, B_node** u);
+int searchPos(int x, int *arr, int n_child);
+void inorder(B_node *node,FILE *out);
+
+
+int main() {
+        
+        FILE *in = fopen("input.txt","r");
+        FILE *out = fopen("output.txt","w");
+        
+        int i;
+        char command[10];
+		
+		while(!feof(in)){
+			fscanf(in,"%s",command);
+			
+		if(strcmp(command,"i")==0){
+			fscanf(in,"%d",&i);
+			insert(i);
+		}
+		else if(strcmp(command,"p")==0){
+			 inorder(root,out);
+			 break;
+		}
+		
+	}
+        
+        
+        return 0;
+}
+
+void insert(int key) {
+        B_node *newnode;
+        int upKey;
+        KeyStatus value;
+        value = ins(root, key, &upKey, &newnode);
+        if (value == Duplicate)
+                printf("Key already available\n");
+        if (value == InsertIt) {
+                B_node *uproot = root;
+                root = (B_node*)malloc(sizeof(B_node));
+                root->n_child = 1;
+                root->key[0] = upKey;
+                root->child[0] = uproot;
+                root->child[1] = newnode;
+        }
+}
+
+KeyStatus ins(B_node *node, int key, int *upKey, B_node **newnode) {
+        B_node *newNode, *lastPtr;
+        int pos, i, n_child, splitPos;
+        int newKey, lastKey;
+        KeyStatus value;
+        if (node == NULL) {
+                *newnode = NULL;
+                *upKey = key;
+                return InsertIt;
+        }
+        n_child = node->n_child;
+        pos = searchPos(key, node->key, n_child);
+        if (pos < n_child && key == node->key[pos])
+                return Duplicate;
+        value = ins(node->child[pos], key, &newKey, &newNode);
+        if (value != InsertIt)
+                return value;
+        if (n_child < order - 1) {
+                pos = searchPos(newKey, node->key, n_child);
+                for (i = n_child; i>pos; i--) {
+                        node->key[i] = node->key[i - 1];
+                        node->child[i + 1] = node->child[i];
+                }
+                node->key[pos] = newKey;
+                node->child[pos + 1] = newNode;
+                ++node->n_child; 
+                return Success;
+        }
+        if (pos == order - 1) {
+                lastKey = newKey;
+                lastPtr = newNode;
+        }
+        else { 
+                lastKey = node->key[order - 2];
+                lastPtr = node->child[order - 1];
+                for (i = order - 2; i>pos; i--) {
+                        node->key[i] = node->key[i - 1];
+                        node->child[i + 1] = node->child[i];
+                }
+                node->key[pos] = newKey;
+                node->child[pos + 1] = newNode;
+        }
+        splitPos = (order - 1) / 2;
+        (*upKey) = node->key[splitPos];
+
+        (*newnode) = (B_node*)malloc(sizeof(B_node));
+        node->n_child = splitPos; 
+        (*newnode)->n_child = order - 1 - splitPos;
+        for (i = 0; i < (*newnode)->n_child; i++) {
+                (*newnode)->child[i] = node->child[i + splitPos + 1];
+                if (i < (*newnode)->n_child - 1)
+                        (*newnode)->key[i] = node->key[i + splitPos + 1];
+                else
+                        (*newnode)->key[i] = lastKey;
+        }
+        (*newnode)->child[(*newnode)->n_child] = lastPtr;
+        return InsertIt;
+}
+
+int searchPos(int key, int *arr, int n_child) {
+        int pos = 0;
+        while (pos < n_child && key > arr[pos])
+                pos++;
+        return pos;
+}
+
+void inorder(B_node *node,FILE *out) {
+        if (node) {
+                if (node->n_child >= 1) {
+                        inorder(node->child[0],out);
+                        fprintf(out,"%d ", node->key[0]);
+                        inorder(node->child[1],out);
+                        if (node->n_child == 2) {
+                                fprintf(out,"%d ", node->key[1]);
+                                inorder(node->child[2],out);
+                        }
+                }
+        }
+}

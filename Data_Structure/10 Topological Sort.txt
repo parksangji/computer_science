@@ -1,0 +1,203 @@
+#include<stdio.h>
+#include<stdlib.h>
+#include<string.h>
+
+typedef struct Graph {
+	int size;
+	int *node;
+	int **matrix;
+}Graph;
+
+typedef struct QNode {
+	int data;
+	struct QNode *next;
+}QNode;
+
+typedef struct Queue {
+	QNode *front, *rear;
+}Queue;
+/*Create a graph with nodes.THE adjacent matrix values if all graphs
+are dynamically allocated and initialized to zero.*/
+Graph CreateGraph(int max_queue_size, int* nodes) {
+
+	Graph G;
+
+	G.size = max_queue_size;
+	G.node = (int*)malloc(sizeof(int)*G.size);
+	G.matrix = (int**)malloc(sizeof(int*)*max_queue_size);
+
+	for (int i = 0; i < max_queue_size; i++) {
+		G.matrix[i] = (int *)malloc(sizeof(int)*max_queue_size);
+		G.node[i] = nodes[i];
+	}
+	for (int i = 0; i < max_queue_size; i++) {
+		for (int j = 0; j < max_queue_size; j++) {
+			G.matrix[i][j] = 0;
+		}
+	}
+	return G;
+}
+/*insert a edge.
+After executing the loop as much as the graph size
+,insert it into the corresponding part of the adjacent matrix.*/
+void InsertEdge(Graph *G, int a, int b) {
+	int a1, b1;
+	for (int i = 0; i < G->size; i++)
+	{
+		if (G->node[i] == a)
+			a1 = i;
+		else if (G->node[i] == b)
+			b1 = i;
+	}
+	G->matrix[a1][b1] = 1;
+}
+/*Displays a graph of the current adjacency matrix.*/
+void PrintMatrix(Graph *G, FILE* out) {
+
+	fprintf(out, "Adjacency matrix\n  ");
+	for (int i = 0; i < G->size; i++) {
+		fprintf(out, "%d ", G->node[i]);
+	}
+	fprintf(out, "\n");
+	for (int i = 0; i < G->size; i++) {
+		fprintf(out, "%d ", G->node[i]);
+		for (int j = 0; j < G->size; j++) {
+			fprintf(out, "%d ", G->matrix[i][j]);
+		}
+		fprintf(out, "\n");
+	}
+
+}
+
+/*Creates and initializes a new queue.*/
+Queue* MakeNewQueue() {
+	Queue *Q;
+	Q = (Queue*)malloc(sizeof(Queue));
+	Q->front = NULL;
+	Q->rear = NULL;
+
+	return Q;
+}
+/*When the queue is empty*/
+int isEmpty(Queue *Q) {
+	if (Q->front == NULL)
+		return 1;
+	else
+		return 0;
+}
+/*A new element at the end of the element in the queue.*/
+void Enqueue(Queue* Q, int X) {
+	QNode *newQueue = (QNode*)malloc(sizeof(QNode));
+	newQueue->data = X;
+	newQueue->next = NULL;
+
+	if (Q->front == NULL) {
+		Q->front = newQueue;
+		Q->rear = newQueue;
+	}
+	else {
+		Q->rear->next = newQueue;
+		Q->rear = newQueue;
+	}
+
+}
+/*the node in the front.*/
+int Dequeue(Queue* Q) {
+	QNode *old = Q->front;
+	int X;
+	if (isEmpty(Q))
+		return 0;
+
+	else {
+		X = old->data;
+		Q->front = Q->front->next;
+
+		if (Q->front == NULL)
+			Q->rear = NULL;
+		free(old);
+
+		return X;
+	}
+}
+
+/*Check the degree of entry into the graph.*/
+void Indegree(struct Graph *G, int* indegree) {
+	int i, j;
+
+	for (j = 0; j < G->size; j++) {
+		for (i = 0; i < G->size; i++)
+			if (G->matrix[i][j] == 1)
+				indegree[j]++;
+	}
+}
+/*print the graph by topological sort.*/
+void Topsort(struct Graph *G, FILE *out) {
+	Queue* Q = MakeNewQueue();
+	Queue* S = MakeNewQueue();
+	int i, j , k;
+
+	int *indegree = (int*)malloc(sizeof(int) * G->size);
+
+	for (i = 0; i < G->size; i++) {
+		indegree[i] = 0;
+	}
+
+	Indegree(G, indegree);
+
+	for (i = 0; i < G->size; i++) {
+		if (indegree[i] == 0)
+			Enqueue(Q, i);
+	}	
+		while (!isEmpty(Q)) {
+
+
+			int i = Dequeue(Q);
+			Enqueue(S, i);
+			
+			for (j = 0; j < G->size; j++) {
+				if (G->matrix[i][j] ==1) {
+				for(k = 0; k < G->size; k++)
+				{
+					if(G->matrix[j][k]==1&&G->matrix[j][k]!=0)
+					--G->matrix[j][k];
+				}
+			}
+					if (--indegree[j] == 0)
+						Enqueue(Q, j);
+				
+			}
+		}
+	    fprintf(out,"\n\nTopSort Result : ");
+	for (i = 0; i < G->size; i++) {
+
+		fprintf(out,"%d ", G->node[Dequeue(S)]);
+	}
+}
+
+
+int main(void) {
+
+	FILE *in = fopen("input.txt", "r");
+	FILE *out = fopen("output.txt", "w");
+
+	int size = 0, *nodes = (int*)malloc(sizeof(int)), a, b;
+	char buffer[125], *tok;
+	Graph G;
+
+	fgets(buffer, 125, in);
+	tok = strtok(buffer, " ");
+	while (tok) {
+		nodes[size++] = atoi(tok);
+		nodes = (int*)realloc(nodes, sizeof(int)*(size + 1));
+		tok = strtok(NULL, " ");
+	}
+	G = CreateGraph(size, nodes);
+	while (!feof(in))
+	{
+		fscanf(in, "%d-%d", &a, &b);
+		InsertEdge(&G, a, b);
+	}
+	PrintMatrix(&G, out);
+
+	Topsort(&G, out);
+}

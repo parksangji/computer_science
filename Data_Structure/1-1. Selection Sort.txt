@@ -1,0 +1,69 @@
+#define _CRT_SECURE_NO_WARNINGS
+#include <stdio.h>
+#include <stdlib.h>
+
+void printArray(int* ,int );
+void swap(int* , int*);
+
+int main() {
+	int i=0, k,n;
+	int *number;
+
+	FILE *file = NULL;
+	file = fopen("input.txt", "r");
+
+	if (file == NULL) {	
+		printf("파일 열기 실패\n");
+	
+	}
+	else
+		printf("파일 열기 성공\n");
+	k = 0;
+    
+    fscanf(file,"%d",&n);
+    
+    number = (int*)malloc(n*sizeof(int)); //동적할당
+    
+	while (fscanf(file, "%d", &i) != EOF) {	
+		number[k] = i;
+		k++;
+	}
+
+	fclose(file);		
+	printArray(number, 50);
+	printf("\n");
+
+	for (k = 0 ; k < 50 ; k++) {	
+		for (i = 0 ; i< 49 - k ; i++) {
+
+			if ( number[i] > number[i+1] ) {
+				swap(&number[i+1], &number[i]);
+			}
+		}
+	}	
+	printArray(number, 50);
+
+	file = fopen("output.txt", "w");
+
+	for (k = 0; k<50; k++) {
+		fprintf(file, "%d ", number[k]);
+	}
+	fclose(file);		
+}
+
+
+void printArray(int array[], int size) {	
+	int i;
+	for (i = 0; i<size; i++) {
+		printf("%d ", array[i]);
+	}
+	printf("\n");
+}
+
+void swap(int *num1, int *num2) {	
+	int temp;
+
+	temp = *num2;
+	*num2 = *num1;
+	*num1 = temp;
+}
