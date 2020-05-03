@@ -74,7 +74,6 @@ def render():
     # gluLookAt(3,3,3, 0,0,0, 0,1,0)
 
     
-    
     glRotatef(35.264, 1, 0, 0);
     glRotatef(-45, 0, 1, 0);
     glTranslatef(-3,-3,-3);
