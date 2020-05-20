@@ -1,0 +1,13 @@
+#lang racket
+
+(define x 3)
+(define y (+ x 2))
+
+(define cube 
+    (labmda (x)
+        (* x (* x x))))
+(define pow
+    (labmda (x y)
+        (if (= y 0)
+            1
+            (* x (pow x (- y 1))))))
