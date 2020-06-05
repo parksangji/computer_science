@@ -20,22 +20,14 @@ cow2wld=None
 cursorOnCowBoundingBox=False
 pickInfo=None
 floorTexID=0
-
-cowCount = 0
-cowPos = []
+cow_Count = 0
+cow_Post = []
 flag = False
-curTime = 0.0
-cowFlag = False
-lastPos = np.array((0,0,0))
-dragPlane = Plane(np.array((0,0,0)),0)
-
-
-
+current_T = 0.0
+cow_flag = False
+prev_Postion = np.array((0,0,0))
+drag_Plane = Plane(np.array((0,0,0)),0)
 click_x = 0
-
-
-
-
 
 cameras= [
 	[28,18,28, 0,2,0, 0,1,0],   
@@ -51,73 +43,67 @@ V_DRAG=2
 # dragging state
 isDrag=0
 
-def catMullRomSpline(time):
-    global pickInfo, lastPos
-# Draw cow with Catmullrom spline
-    pos = (int)(time * 2) % 6
-# The 4 points we need to form a spline between p1 and p2
-    p0 = getTranslation(cowPos[(pos + 6 - 1) % 6])
-    p1 = getTranslation(cowPos[pos])
-    p2 = getTranslation(cowPos[(pos + 1) % 6])
-    p3 = getTranslation(cowPos[(pos + 2) % 6])
+def Spline(time):
+    global pickInfo, prev_Postion
+    Postion = (int)(time * 2) % 6
+    Position_number_0 = getTranslation(cow_Post[(Postion + 6 - 1) % 6])
+    Position_number_1 = getTranslation(cow_Post[Postion])
+    Position_number_2 = getTranslation(cow_Post[(Postion + 1) % 6])
+    Position_number_3 = getTranslation(cow_Post[(Postion + 2) % 6])
        
-# Find the coordinate between the end points with a Catmull-Rom spline
-    newPos = splinePosition(time * 2 - (int)(time * 2), p0, p1, p2, p3)
+    new_Postion = spline_Position(time * 2 - (int)(time * 2), Position_number_0, Position_number_1, Position_number_2, Position_number_3)
 
     pp = pickInfo
 
     T=np.eye(4)
-    setTranslation(T, newPos);
+    setTranslation(T, new_Postion);
 
-    dx = newPos[0] - lastPos[0];
-    dy = newPos[1] - lastPos[1];
-    dz = -(newPos[2] - lastPos[2]);
+    dirt_a = new_Postion[0] - prev_Postion[0];
+    dirt_y = new_Postion[1] - prev_Postion[1];
+    dirt_z = -(new_Postion[2] - prev_Postion[2]);
 
-    angle = 0.0
+    main_angle = 0.0
 
-  #Rotate cow with angle which is derive from last position and new position
-    if dx > 0 and dz > 0 :
-        angle = math.atan2(dz, dx)
-    elif dx < 0 and dz > 0 : 
-        angle = math.pi - math.atan2(dz, -dx)
-    elif dx < 0 and dz < 0 : 
-        angle = -(math.pi - math.atan2(-dz, -dx))
+    if dirt_a > 0 and dirt_z > 0 :
+        main_angle = math.atan2(dirt_z, dirt_a)
+    elif dirt_a < 0 and dirt_z > 0 : 
+        main_angle = math.pi - math.atan2(dirt_z, -dirt_a)
+    elif dirt_a < 0 and dirt_z < 0 : 
+        main_angle = -(math.pi - math.atan2(-dirt_z, -dirt_a))
     else : 
-        angle = - math.atan2(-dz, dx) 
-    angle *= 180.0 / math.pi;
+        main_angle = - math.atan2(-dirt_z, dirt_a) 
+    main_angle *= 180 / math.pi
             
-    ang = angle * 0.017
-    rotateY = np.array([[np.cos(ang), 0, np.sin(ang), 0],
+    angle = main_angle * 0.017
+    rot_Y = np.array([[np.cos(angle), 0, np.sin(angle), 0],
                    [0,1,0,0],
-                   [-np.sin(ang), 0, np.cos(ang), 0],
+                   [-np.sin(angle), 0, np.cos(angle), 0],
                    [0,0,0,1]])
-    length = math.sqrt(dx * dx + dz * dz)
-    angleY = math.atan2(dy, length) * 180.0 / math.pi * 0.017 
+    lgth = math.sqrt(dirt_a * dirt_a + dirt_z * dirt_z)
+    angle_Y = math.atan2(dirt_y, lgth) * 180 / math.pi * 0.017 
 
-    rotateZ = np.array([[np.cos(angleY), -np.sin(angleY), 0, 0],
-                   [np.sin(angleY), np.cos(angleY), 0, 0],
+    rot_Z = np.array([[np.cos(angle_Y), -np.sin(angle_Y), 0, 0],
+                   [np.sin(angle_Y), np.cos(angle_Y), 0, 0],
                    [0,0,1,0],
                    [0,0,0,1]])
     
-    T = T@rotateY
+    T = T @ rot_Y
 
-    T = T@rotateZ
+    T = T @ rot_Z
 
 
     drawCow(T, False)
-#Save the position to calculate the head direction of the cow
-    lastPos = newPos
+    prev_Postion = new_Postion
  
 
-def splinePosition(t, p0, p1, p2, p3) :
-    a = 2.0 * p1
-    b = p2 - p0
-    c = 2.0 * p0 - 5.0 * p1 + 4.0 * p2 - p3
-    d = -p0 + 3.0 * p1 - 3.0 * p2 + p3
+def spline_Position(t, Position_number_0, Position_number_1, Position_number_2, Position_number_3) :
+    a = 2.0 * Position_number_1
+    b = Position_number_2 - Position_number_0
+    c = 2.0 * Position_number_0 - 5.0 * Position_number_1 + 4.0 * Position_number_2 - Position_number_3
+    d = -Position_number_0 + 3.0 * Position_number_1 - 3.0 * Position_number_2 + Position_number_3
         
- #The cubic polynomial: a + b * t + c * t^2 + d * t^3 and 0.5 for regular catmullrom spline
-    pos = 0.5 * (a + (b * t) + (c * t * t) + (d * t * t * t))
-    return pos
+    Postion = 0.5 * (a + (b * t) + (c * t * t) + (d * t * t * t))
+    return Postion
 
 class PickInfo:
     def __init__(self, cursorRayT, cowPickPosition, cowPickConfiguration, cowPickPositionLocal):
@@ -301,7 +287,7 @@ def drawFloor():
     drawFrame(5);				# Draw x, y, and z axis.
 
 def display():
-    global cameraIndex, cow2wld,cursorOnCowBoundingBox,cowPos,curTime,cowFlag,cowCount,flag
+    global cameraIndex, cow2wld,cursorOnCowBoundingBox,cow_Post,current_T,cow_flag,cow_Count,flag
     glClearColor(0.8, 0.9, 0.9, 1.0)
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);				# Clear the screen
     # set viewing transformation.
@@ -315,29 +301,29 @@ def display():
     #animTime=glfw.get_time()-animStartTime;
     #you need to modify both the translation and rotation parts of the cow2wld matrix.
     ###
-    if cowCount < 6 :
-        for i in range(cowCount) :
-            drawCow(cowPos[i], False)
+    if cow_Count < 6 :
+        for i in range(cow_Count) :
+            drawCow(cow_Post[i], False)
         drawCow(cow2wld, cursorOnCowBoundingBox)													# Draw cow.
-    elif cowCount == 6 :
+    elif cow_Count == 6 :
         if flag == False :
             flag = True
             glfw.set_time(0.0)
-            curTime = 0.0
-            cowFlag = False
-            newPos = getTranslation(cowPos[0])
+            current_T = 0.0
+            cow_flag = False
+            new_Postion = getTranslation(cow_Post[0])
             
 
-            catMullRomSpline(curTime)
-        elif curTime < 9 :
-            curTime = glfw.get_time()
-            catMullRomSpline(curTime)
+            Spline(current_T)
+        elif current_T < 9 :
+            current_T = glfw.get_time()
+            Spline(current_T)
         else :
-            cowCount = 0
-            cowPos = []
+            cow_Count = 0
+            cow_Post = []
             flag = False
             cursorOnCowBoundingBox = False
-            cowFlag = False
+            cow_flag = False
 
     glFlush();
 
@@ -422,7 +408,7 @@ def initialize(window):
     cameraIndex = 0;
 
 def onMouseButton(window,button, state, mods):
-    global isDrag, V_DRAG, H_DRAG ,cowFlag, cowCount, pickInfo, click_x,currentPos,dragPlane , cursorOnCowBoundingBox ,cow2wld, cowPos
+    global isDrag, V_DRAG, H_DRAG ,cow_flag, cow_Count, pickInfo, click_x,current_Postion,drag_Plane , cursorOnCowBoundingBox ,cow2wld, cow_Post
     GLFW_DOWN=1;
     GLFW_UP=0;
     x, y=glfw.get_cursor_pos(window)
@@ -435,31 +421,27 @@ def onMouseButton(window,button, state, mods):
                 isDrag = V_DRAG
                 print( "Left mouse down-click at %d %d\n" % (x,y))
 
-            if cowFlag == True :
-                if cowCount < 6 :
+            if cow_flag == True :
+                if cow_Count < 6 :
                     ray = screenCoordToRay(window,x,y)
                     pp = pickInfo
                     p= Plane(np.array((0,1,0)), pp.cowPickPosition)
                     c=ray.intersectsPlane(p)
-                    currentPos = ray.getPoint(c[1])
-                    dragPlane = Plane(np.array((0,0,1)),currentPos)
+                    current_Postion = ray.getPoint(c[1])
+                    drag_Plane = Plane(np.array((0,0,1)),current_Postion)
 
                     click_x = x
 
             # start vertical dragging
         elif state == GLFW_UP and isDrag!=0:
            
-            if cowFlag == False and cursorOnCowBoundingBox == True :
-                cowFlag = True
-            elif cowCount < 6 :
-                cowPos.append(cow2wld) 
-                cowCount += 1
-                
-
+            if cow_flag == False and cursorOnCowBoundingBox == True :
+                cow_flag = True
+            elif cow_Count < 6 :
+                cow_Post.append(cow2wld) 
+                cow_Count += 1
             isDrag=H_DRAG
             print( "Left mouse up\n");
-            
-
             # start horizontal dragging using mouse-move events.
     elif button == glfw.MOUSE_BUTTON_RIGHT:
         if state == GLFW_DOWN:
@@ -468,21 +450,21 @@ def onMouseButton(window,button, state, mods):
 
 
 def onMouseDrag(window, x, y):
-    global isDrag,cursorOnCowBoundingBox, pickInfo, cow2wld, dragPlane, currentPos, click_x
+    global isDrag,cursorOnCowBoundingBox, pickInfo, cow2wld, drag_Plane, current_Postion, click_x
     if isDrag: 
         print( "in drag mode %d\n"% isDrag);
-        if isDrag==V_DRAG and cowFlag == True:
+        if isDrag==V_DRAG and cow_flag == True:
             # vertical dragging
             # TODO:
             # create a dragging plane perpendicular to the ray direction, 
             # and test intersection with the screen ray.
             ray = screenCoordToRay(window, click_x, y)
             pp = pickInfo
-            c = ray.intersectsPlane(dragPlane)
-            currentPos = ray.getPoint(c[1])
+            c = ray.intersectsPlane(drag_Plane)
+            current_Postion = ray.getPoint(c[1])
             print('vdrag')
             T=np.eye(4)
-            setTranslation(T, currentPos-pp.cowPickPosition)
+            setTranslation(T, current_Postion-pp.cowPickPosition)
             cow2wld=T@pp.cowPickConfiguration
         
         else:
@@ -494,13 +476,13 @@ def onMouseDrag(window, x, y):
                 p=Plane(np.array((0,1,0)), pp.cowPickPosition);
                 c=ray.intersectsPlane(p);
 
-                currentPos=ray.getPoint(c[1])
-                print(pp.cowPickPosition, currentPos)
+                current_Postion=ray.getPoint(c[1])
+                print(pp.cowPickPosition, current_Postion)
                 print(pp.cowPickConfiguration, cow2wld)
 
                 
                 T=np.eye(4)
-                setTranslation(T, currentPos-pp.cowPickPosition)
+                setTranslation(T, current_Postion-pp.cowPickPosition)
                 cow2wld=T@pp.cowPickConfiguration;
     else:
         ray=screenCoordToRay(window, x, y)
@@ -537,7 +519,7 @@ def screenCoordToRay(window, x, y):
             -1*(((float(y - 0))/float(height))*2.0-1.0),
             -10)
 
-    #std::cout<<"cowPosition in clip coordinate (NDC)"<<matProjection*cow2wld.getTranslation()<<std::endl;
+    #std::cout<<"cow_Postition in clip coordinate (NDC)"<<matProjection*cow2wld.getTranslation()<<std::endl;
 	
     vecBeforeProjection=position3(invMatProjection@vecAfterProjection);
 
@@ -550,7 +532,7 @@ def main():
         sys.exit(-1)
     width = 800;
     height = 600;
-    window = glfw.create_window(width, height, 'modern opengl example', None, None)
+    window = glfw.create_window(width, height, 'CG_practice_assignment_02_2017069598', None, None)
     if not window:
         glfw.terminate()
         sys.exit(-1)
