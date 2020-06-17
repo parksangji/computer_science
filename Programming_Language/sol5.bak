@@ -20,13 +20,20 @@
 
 ;; Problem 1
 
-(define (racketlist -> mupllist xs)
-  (if (null? xs) (aunit) (apair (car xs) (racketlist -> mupllist (cdr xs)))))
+;; CHANGE (put your solutions here)
+
+(define (racketlist->mupllist l)
+   (cond [(null? l) (aunit)]
+ 	[(pair? l) (apair (car l) (racketlist->mupllist (cdr l)))]))
+
+(define (mupllist->racketlist list)
+  (if (aunit? list) null   (cons (apair-e1 list) (mupllist->racketlist (apair-e2 list)))))
 
 ;; Problem 2
 
 ;; lookup a variable in an environment
 ;; Do NOT change this function
+
 (define (envlookup env str)
   (cond [(null? env) (error "unbound variable during evaluation" str)]
         [(equal? (car (car env)) str) (cdr (car env))]
@@ -48,6 +55,59 @@
                        (int-num v2)))
                (error "MUPL addition applied to non-number")))]
         ;; CHANGE add more cases here
+
+        
+        [(int? e) e] 
+        [(fun? e)
+         (closure env e)]
+        [(ifgreater? e)
+         (letrec ([v1 (eval-under-env (ifgreater-e1 e) env)]
+                  [v2 (eval-under-env (ifgreater-e2 e) env)])
+           (if (and (int? v1) (int? v2))
+               (if (> (int-num v1) (int-num v2)) (eval-under-env (ifgreater-e3 e) env) (eval-under-env (ifgreater-e4 e) env))
+               (error "MUPL ifgreater applied to non-number")))]
+        [(mlet? e)
+         (let ([v (eval-under-env (mlet-e e) env)])
+	   (eval-under-env (mlet-body e) (append (list (cons (mlet-var e) v)) env)))]
+        [(call? e)
+         (let ([v1 (eval-under-env (call-funexp e) env)]
+               [v2 (eval-under-env (call-actual e) env)])
+           (if  (closure? v1)
+               (eval-under-env (fun-body (closure-fun v1))
+			       (append (closure-env v1)
+				       (list (cons (fun-formal (closure-fun v1)) v2)
+                                             (if (fun-nameopt (closure-fun v1))
+                                                 (cons (fun-nameopt (closure-fun v1)) v1)
+                                                 '()))))
+               (error "MUPL can't call a function that is non-closure")))]
+        [(closure? e) e]
+        [(apair? e)
+         (letrec(
+                 [v1 (eval-under-env (apair-e1 e) env)]
+                 [v2 (eval-under-env (apair-e2 e) env)])
+           (apair v1 v2))]
+       
+        
+        [(fst? e)
+         (letrec ([v (eval-under-env (fst-e e) env)])
+           (
+           if (apair? v)
+               (apair-e1 v)
+               (error "fst applied to non-apair")))]
+        [(snd? e)
+         (letrec ([v (eval-under-env (snd-e e) env)])
+           (if (apair? v)
+               (apair-e2 v)
+               (error "snd applied to non_apair")))]
+       
+        [(isaunit? e)
+          (letrec( [v (eval-under-env (isaunit-e e) env)])
+            (if (aunit? v)
+                (int 1)
+                (int 0)))]
+        [(aunit? e) e]
+        
+        
         [#t (error (format "bad MUPL expression: ~v" e))]))
 
 ;; Do NOT change
@@ -56,20 +116,31 @@
         
 ;; Problem 3
 
-(define (ifaunit e1 e2 e3) "CHANGE")
+(define (ifaunit e1 e2 e3) (ifgreater (isaunit e1) (int 0) e2 e3))
+                            
+(define (mlet* list e2) 
+         (if (null? list) e2 
+         (mlet (car (car list)) (cdr (car list)) (mlet* (cdr list) e2))))
 
-(define (mlet* lstlst e2) "CHANGE")
-
-(define (ifeq e1 e2 e3 e4) "CHANGE")
+(define (ifeq e1 e2 e3 e4)
+  (mlet* (list (cons "_x" e1) (cons "_y" e2))
+         (ifgreater (var "_x") (var "_y") e4
+                    (ifgreater (var "_y") (var "_x") e4 e3))))
 
 ;; Problem 4
 
-(define mupl-map "CHANGE")
+(define mupl-map
+  (fun "mupl-map-func" "func" 
+       (fun "mupl-map-list" "list" 
+            (ifaunit (var "list")
+                (aunit)
+                (apair (call (var "func") (fst (var "list")))
+                       (call (var "mupl-map-list") (snd (var "list"))))))))
 
 (define mupl-mapAddN 
   (mlet "map" mupl-map
-        "CHANGE (notice map is now in MUPL scope)"))
-
+        (fun "mupl-mapAddN-int" "i" 
+             (call (var "map") (fun "add-i" "x" (add (var "x") (var "i")))))))
 
 (struct fun-challenge (nameopt formal body freevars) #:transparent) ;; a recursive(?) 1-argument function
 
