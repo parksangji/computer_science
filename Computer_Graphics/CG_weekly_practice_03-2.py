@@ -36,9 +36,10 @@ def main() :
         glfw.poll_events()
         t = glfw.get_time()
         th = t
-        T = np.array([[np.cos(th),-np.sin(th),0],[np.sin(th),np.cos(th),0],[0,0,1]] )
-        S = np.array([[1.5,1,0.5],[0,0.5,0],[1,1,1]])
-        render(T@S)
+        T = np.array([[np.cos(th),-np.sin(th),0.],[np.sin(th),np.cos(th),0.],[0.,0.,1.]] )
+        S = np.array([[1.,0.,0.5],[0,1.,.1],[0.,0.,1.]])
+        R = T @ S
+        render(R)
         glfw.swap_buffers(window)
 
     glfw.terminate()

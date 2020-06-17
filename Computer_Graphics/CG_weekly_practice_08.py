@@ -73,9 +73,13 @@ def render(ang):
     Rx = np.array([[np.cos(zang), -np.sin(zang), 0],
                    [np.sin(zang), np.cos(zang), 0],
                    [0,0,1]]) 
-    Ry = np.array([[1,0,0],
-                   [0, np.cos(yang), -np.sin(yang)],
-                   [0, np.sin(yang), np.cos(yang)]])
+    # Ry = np.array([[1,0,0],
+    #                [0, np.cos(yang), -np.sin(yang)],
+    #                [0, np.sin(yang), np.cos(yang)]])
+
+    Ry = np.array([[np.cos(yang),0,-np.sin(yang)],
+                  [0,1,0],
+                  [np.sin(yang),0,np.cos(yang)]])
     Rz = np.array([[np.cos(xang), -np.sin(xang), 0],
                    [np.sin(xang), np.cos(xang), 0],
                    [0,0,1]])
@@ -281,9 +285,9 @@ def key_callback(window, key, scancode, action, mods):
     global gCamAng, gCamHeight ,gA,gB,gG
     if action==glfw.PRESS or action==glfw.REPEAT:
         if key==glfw.KEY_1:
-            gCamAng += np.radians(-10)
+            gCamAng += np.radians(30)
         elif key==glfw.KEY_3:
-            gCamAng += np.radians(10)
+            gCamAng += np.radians(30)
         elif key==glfw.KEY_2:
             gCamHeight += .1
         elif key==glfw.KEY_W:

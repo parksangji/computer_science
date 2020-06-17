@@ -53,8 +53,8 @@ def key_callback(window, key, scancode, action, mods):
             gComposedM = newM
         elif key == glfw.KEY_W:
             newM = np.array([[0.9,0.,0.],
-                            [0.,0.9,0.],
-                            [0.,0.,0.9]])
+                            [0.,1.,0.],
+                            [0.,0.,1.]])
             gComposedM = newM @ gComposedM
         elif key == glfw.KEY_S:
             th = np.radians(10)
