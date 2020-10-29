@@ -1,0 +1,3 @@
+/home/sangji/2017069598/week6/CMakeFiles/rebuild_cache.dir
+/home/sangji/2017069598/week6/CMakeFiles/main.dir
+/home/sangji/2017069598/week6/CMakeFiles/edit_cache.dir

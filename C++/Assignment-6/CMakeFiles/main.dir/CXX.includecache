@@ -1,0 +1,26 @@
+#IncludeRegexLine: ^[ 	]*[#%][ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+/home/sangji/2017069598/week6/list.h
+string
+-
+functional
+-
+node.h
+/home/sangji/2017069598/week6/node.h
+
+/home/sangji/2017069598/week6/main.cc
+iostream
+-
+cassert
+-
+list.h
+/home/sangji/2017069598/week6/list.h
+
+/home/sangji/2017069598/week6/node.h
+
